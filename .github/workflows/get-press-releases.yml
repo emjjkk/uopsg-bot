@@ -1,0 +1,40 @@
+name: press-releases
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours
+  workflow_dispatch:
+
+jobs:
+  check-press:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read last known press URL
+        id: last
+        run: |
+          echo "lastUrl=$(jq -r '.lastUrl' data/last-press.json)" >> $GITHUB_OUTPUT
+
+      - name: Call press-check endpoint
+        id: check
+        run: |
+          response=$(curl -sS "https://uopeople-sg-bot.vercel.app/v1/tasks/get-press-releases?lastUrl=${{ steps.last.outputs.lastUrl }}")
+          echo "response=$response" >> $GITHUB_OUTPUT
+          latestUrl=$(echo "$response" | jq -r '.latestUrl')
+          posted=$(echo "$response" | jq -r '.posted')
+          echo "latestUrl=$latestUrl" >> $GITHUB_OUTPUT
+          echo "posted=$posted" >> $GITHUB_OUTPUT
+
+      - name: Update last-press.json
+        if: steps.check.outputs.posted == 'true'
+        run: |
+          echo "{\"lastUrl\": \"${{ steps.check.outputs.latestUrl }}\"}" > data/last-press.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/last-press.json
+          git commit -m "Update last press release to ${{ steps.check.outputs.latestUrl }}"
+          git push
+          
