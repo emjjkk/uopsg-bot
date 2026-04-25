@@ -9,6 +9,7 @@ import {
 
 const WATCH_CHANNEL_ID = "1497431258274332702";
 const WELCOME_CHANNEL_ID = "812056538650378311";
+const INVITE_LINK_REGEX = /https?:\/\/(?:www\.)?(?:discord\.gg|discord(?:app)?\.com\/invite)\/[A-Za-z0-9-]+/i;
 
 const client = new Client({
   intents: [
@@ -44,6 +45,23 @@ client.once("clientReady", () => {
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) {
+    return;
+  }
+
+  const hasInviteLink = INVITE_LINK_REGEX.test(message.content);
+
+  if (hasInviteLink && message.guild) {
+    try {
+      await message.delete();
+      await message.guild.members.kick(message.author.id, "Posted a Discord invite link");
+
+      await message.channel.send(
+        `@${message.author.username} was kicked for posting an invite link. Have a good day.`
+      );
+    } catch (error) {
+      console.error("Failed to moderate invite link post:", error);
+    }
+
     return;
   }
 
