@@ -121,7 +121,6 @@ client.on("messageCreate", async (message) => {
         `⚠️ Violation detected from <@${message.author.id}> but moderation action could not be taken (likely due to permissions).`
       );
     }
-
     return;
   }
 
