@@ -1,3 +1,4 @@
+import express from "express";
 import "dotenv/config";
 import {
   Client,
@@ -170,3 +171,15 @@ if (!token) {
 }
 
 client.login(token);
+
+const app = express();
+
+app.get("/", (req, res) => {
+  res.status(200).send("Bot is alive");
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🌐 Keep-alive server running on port ${PORT}`);
+});
